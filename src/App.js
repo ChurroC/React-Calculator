@@ -3,42 +3,72 @@ import DigitButton from './components/DigitButton'
 import OperationButton from './components/OperationButton'
 import styles from './style.module.css'
 
-function reducer(state, { type, payload: { digit, operation } }) {
+function reducer(state, { type, payload }) {
     switch (type) {
         case 'ADD_DIGIT':
-            if (digit === '0' && state.currentOperand === '0') return state
-            if (digit === '.' && state.currentOperand.includes('.')) return state
-            return { ...state, currentOperand: `${state.currentOperand || ''}${digit}` }
-        case 'CHOOSE_OPERATION':
-            if (state.currentOperand === null && state.currentOperand === null) return state
-            console.log(state)
-            if (state.currentOperand === null) {console.log('ef')
-                 return { ...state, operation }
-            }
-            if (state.previousOperand === '' || state.previousOperand === undefined) {
+            if (state.overwrite) {
+                console.log('ovberwitres')
                 return {
                     ...state,
-                    operation,
+                    overwrite: false,
+                    currentOperand: payload.digit,
+                    previousOperand: `Ans = ${state.currentOperand}`,
+                }
+            }
+            if (payload.digit === '0' && state.currentOperand === '0') return state
+            if (payload.digit === '.' && (state.currentOperand ? state.currentOperand.includes('.') : false)) return state
+            return { ...state, currentOperand: `${state.currentOperand || ''}${payload.digit}` }
+        case 'CHOOSE_OPERATION':
+            if (state.currentOperand == null && state.previousOperand == null) return state
+            if (state.currentOperand == null) return { ...state, operation: payload.operation }
+            if (state.previousOperand == null) {
+                return {
+                    ...state,
+                    operation: payload.operation,
                     previousOperand: state.currentOperand,
-                    currentOperand: null
+                    currentOperand: null,
+                    overwrite: false,
                 }
             }
             return {
                 ...state,
-                operation,
+                operation: payload.operation,
                 previousOperand: evaluate(state),
                 currentOperand: null
             }
         case 'CLEAR':
-            console.log('ji')
             return {}
         case 'DELETE_DIGIT':
-            return { ...state, currentOperand: '', previousOperand: '', operation: '' }
+            if (state.overwrite) return {}
+            if (state.currentOperand == null) return state
+            if (state.currentOperand.length === 1) return { ...state, currentOperand: '0' }
+            return { ...state, currentOperand: state.currentOperand.slice(0, -1) }
         case 'EVALUATE':
-            return { ...state, currentOperand: '', previousOperand: '', operation: '' }
+            if (state.currentOperand == null ||
+                state.previousOperand == null ||
+                state.operation == null
+            ) return state
+
+            return {
+                ...state,
+                overwrite: true,
+                previousOperand: null,
+                currentOperand: evaluate(state),
+                operation: null
+            }
         default:
             return state
     }
+}
+
+const INTEGER_FORMATTER = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 0,
+})
+function formatOperand(operand) {
+    if (operand == null) return
+    const [integer, decimal] = operand.toString().split('.')
+    if (decimal == null) return INTEGER_FORMATTER.format(operand)
+    return `${INTEGER_FORMATTER.format(integer)}.${decimal}`
 }
 
 function evaluate({ previousOperand, currentOperand, operation }) {
@@ -47,6 +77,7 @@ function evaluate({ previousOperand, currentOperand, operation }) {
     if (isNaN(prev) || isNaN(curr)) return ''
     switch (operation) {
         case '+':
+            //console.log(prev,curr)
             return (prev + curr).toString()
         case '-':
             return (prev - curr).toString()
@@ -61,16 +92,16 @@ function evaluate({ previousOperand, currentOperand, operation }) {
 
 function App() {
     const [{ currentOperand, previousOperand, operation }, dispatch] = useReducer(reducer, {})
-    console.log(currentOperand)
+
     return (
         <div className={styles['calculator-grid']}>
             <div className={styles.output}>
-                <div className={styles['previous-operand']}>{previousOperand} {operation}</div>
-                <div className={styles['current-operand']}>{currentOperand}</div>
+                <div className={styles['previous-operand']}>{formatOperand(previousOperand)} {operation}</div>
+                <div className={styles['current-operand']}>{formatOperand(currentOperand)}</div>
             </div>
 
             <button className={styles['span-two']} onClick={() => dispatch({ type: 'CLEAR' })}>AC</button>
-            <button>DEL</button>
+            <button onClick={() => dispatch({ type: 'DELETE_DIGIT' })}>DEL</button>
             <OperationButton operation={'÷'} dispatch={dispatch}>÷</OperationButton>
             {['1', '2', '3'].map(digit => <DigitButton key={digit} digit={digit} dispatch={dispatch}>{digit}</DigitButton>)}
             <OperationButton operation={'*'} dispatch={dispatch}>*</OperationButton>
@@ -79,7 +110,7 @@ function App() {
             {['7', '8', '9'].map(digit => <DigitButton key={digit} digit={digit} dispatch={dispatch}>{digit}</DigitButton>)}
             <OperationButton operation={'-'} dispatch={dispatch}>-</OperationButton>
             {['.', '0'].map(digit => <DigitButton key={digit} digit={digit} dispatch={dispatch}>{digit}</DigitButton>)}
-            <button className={styles['span-two']}>=</button>
+            <button className={styles['span-two']} onClick={() => dispatch({ type: 'EVALUATE' })}>=</button>
         </div>
     )
 }
