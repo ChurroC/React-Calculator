@@ -7,17 +7,16 @@ function reducer(state, { type, payload }) {
     switch (type) {
         case 'ADD_DIGIT':
             if (state.overwrite) {
-                console.log('ovberwitres')
                 return {
                     ...state,
                     overwrite: false,
                     currentOperand: payload.digit,
-                    previousOperand: `Ans = ${state.currentOperand}`,
+                    answer: `Ans = ${state.currentOperand}`
                 }
             }
             if (payload.digit === '0' && state.currentOperand === '0') return state
             if (payload.digit === '.' && (state.currentOperand ? state.currentOperand.includes('.') : false)) return state
-            return { ...state, currentOperand: `${state.currentOperand || ''}${payload.digit}` }
+            return { ...state, currentOperand: `${state.currentOperand || ''}${payload.digit}`}
         case 'CHOOSE_OPERATION':
             if (state.currentOperand == null && state.previousOperand == null) return state
             if (state.currentOperand == null) return { ...state, operation: payload.operation }
@@ -28,6 +27,7 @@ function reducer(state, { type, payload }) {
                     previousOperand: state.currentOperand,
                     currentOperand: null,
                     overwrite: false,
+                    answer: null
                 }
             }
             return {
@@ -74,10 +74,10 @@ function formatOperand(operand) {
 function evaluate({ previousOperand, currentOperand, operation }) {
     const prev = parseFloat(previousOperand)
     const curr = parseFloat(currentOperand)
+    console.log(prev, curr, operation)
     if (isNaN(prev) || isNaN(curr)) return ''
     switch (operation) {
         case '+':
-            //console.log(prev,curr)
             return (prev + curr).toString()
         case '-':
             return (prev - curr).toString()
@@ -91,12 +91,12 @@ function evaluate({ previousOperand, currentOperand, operation }) {
 }
 
 function App() {
-    const [{ currentOperand, previousOperand, operation }, dispatch] = useReducer(reducer, {})
+    const [{ currentOperand, previousOperand, operation, answer }, dispatch] = useReducer(reducer, {})
 
     return (
         <div className={styles['calculator-grid']}>
             <div className={styles.output}>
-                <div className={styles['previous-operand']}>{formatOperand(previousOperand)} {operation}</div>
+                <div className={styles['previous-operand']}>{answer}{formatOperand(previousOperand)} {operation}</div>
                 <div className={styles['current-operand']}>{formatOperand(currentOperand)}</div>
             </div>
 
