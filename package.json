@@ -35,5 +35,13 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "guppy": {
+    "id": "261b0d80-2301-11ed-b017-21a6f7c038de",
+    "name": "calculator_react_app",
+    "type": "create-react-app",
+    "color": "#AA00FF",
+    "icon": null,
+    "createdAt": 1661272335963
   }
 }
