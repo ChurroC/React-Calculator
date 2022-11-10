@@ -1,0 +1,3 @@
+[submodule "React-Calculator"]
+	path = React-Calculator
+	url = https://github.com/ChurroC/React-Calculator
